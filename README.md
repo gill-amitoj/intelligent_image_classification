@@ -2,6 +2,8 @@
 
 Transfer learning with ResNet‑18 for multi‑class image classification, evaluation with Grad‑CAM, and a Flask web app for real‑time inference.
 <img width="1353" height="756" alt="image" src="https://github.com/user-attachments/assets/51cfa61a-ccd7-4c50-bd21-b89e83eec343" />
+<img width="1199" height="734" alt="image" src="https://github.com/user-attachments/assets/b9b2b64c-741f-45a5-861b-da1afb1d8b74" />
+
 
 
 ## Structure
