@@ -78,6 +78,21 @@ def save_checkpoint(model: nn.Module, path: Path) -> None:
     torch.save(model.state_dict(), path)
 
 
+def make_optimizer_for_head(model: nn.Module, lr: float) -> torch.optim.Optimizer:
+    """Create optimizer for training only the classification head."""
+    return Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+
+
+def make_optimizer_head_and_layer4(model: nn.Module, head_lr: float, layer4_lr: float) -> torch.optim.Optimizer:
+    """Create optimizer with param groups for head and unfrozen layer4."""
+    params = []
+    if hasattr(model, "fc"):
+        params.append({"params": model.fc.parameters(), "lr": head_lr})
+    if hasattr(model, "layer4"):
+        params.append({"params": model.layer4.parameters(), "lr": layer4_lr})
+    return Adam(params)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train ResNet-18 on an image dataset")
     parser.add_argument("--train_dir", type=str, default="data/train", help="Training images root")
@@ -89,6 +104,8 @@ def main():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--output_dir", type=str, default="models")
     parser.add_argument("--checkpoint_name", type=str, default="resnet18_best.pth")
+    parser.add_argument("--unfreeze_after", type=int, default=0, help="Epoch after which to unfreeze layer4 (0=never)")
+    parser.add_argument("--unfrozen_lr", type=float, default=1e-4, help="LR for unfrozen layer4 if enabled")
 
     args = parser.parse_args()
 
@@ -113,12 +130,21 @@ def main():
 
     # Train only the head
     criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
+    optimizer = make_optimizer_for_head(model, lr=args.lr)
 
     best_val_acc = 0.0
     best_path = Path(args.output_dir) / args.checkpoint_name
 
     for epoch in range(1, args.epochs + 1):
+        # Optionally unfreeze layer4 after warmup
+        if args.unfreeze_after and epoch == args.unfreeze_after:
+            if hasattr(model, "layer4"):
+                for p in model.layer4.parameters():
+                    p.requires_grad = True
+                optimizer = make_optimizer_head_and_layer4(model, head_lr=args.lr, layer4_lr=args.unfrozen_lr)
+                print(
+                    f"[Fine-tune] Unfroze layer4 at epoch {epoch}. Head LR={args.lr}, layer4 LR={args.unfrozen_lr}"
+                )
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = evaluate(model, val_loader, criterion, device)
 

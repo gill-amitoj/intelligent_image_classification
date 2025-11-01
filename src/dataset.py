@@ -6,6 +6,10 @@
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
+from PIL import ImageFile
+
+# Allow loading truncated images instead of crashing
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def get_data_loaders(train_dir, val_dir, batch_size=32, img_size=224):
     """Return PyTorch dataloaders for training and validation."""
