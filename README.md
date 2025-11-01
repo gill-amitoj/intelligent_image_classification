@@ -14,9 +14,9 @@ Transfer learning with ResNet‑18 for multi‑class image classification, evalu
 Create and activate a virtual environment, then install requirements:
 
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 Organize your dataset as:
@@ -36,7 +36,7 @@ data/
 Trains the head of ResNet‑18 and saves the best checkpoint and class mapping:
 
 ```bash
-python -m src.train --train_dir data/train --val_dir data/val \
+python3 -m src.train --train_dir data/train --val_dir data/val \
 	--epochs 10 --batch_size 32 --lr 1e-3 --img_size 224 \
 	--output_dir models --checkpoint_name resnet18_best.pth
 ```
@@ -50,7 +50,7 @@ Artifacts:
 Computes accuracy/metrics, saves confusion matrix, and generates Grad‑CAM overlays:
 
 ```bash
-python -m src.evaluate --data_dir data/val \
+python3 -m src.evaluate --data_dir data/val \
 	--model_path models/resnet18_best.pth \
 	--classes_path models/classes.json \
 	--out_dir models/eval --num_cam 6
@@ -66,7 +66,7 @@ Outputs saved under `models/eval/`:
 Start the web app to upload an image and see the prediction + Grad‑CAM:
 
 ```bash
-python app/app.py
+python3 app/app.py
 ```
 
 Open http://localhost:5000 in your browser. The app expects `models/resnet18_best.pth` and `models/classes.json` from training.
@@ -92,28 +92,20 @@ Open http://localhost:5000 in your browser. The app expects `models/resnet18_bes
 Local development (recommended):
 
 ```bash
-python app/app.py
+python3 app/app.py
 # http://127.0.0.1:5000
 ```
 
 Expose to your LAN (will prompt macOS local network permission):
 
 ```bash
-HOST=0.0.0.0 PORT=8000 python app/app.py
+HOST=0.0.0.0 PORT=8000 python3 app/app.py
 # http://<your-lan-ip>:8000
-```
-
-Add Basic Auth (optional):
-
-```bash
-export BASIC_AUTH_USERNAME=admin
-export BASIC_AUTH_PASSWORD=strongpassword
-python app/app.py
 ```
 
 Public sharing (temporary): use a tunnel like `ngrok` to your local port.
 
 Production options:
 - Containerize and deploy to Cloud Run, Fly.io, or Railway (TLS, scaling, secrets).
-- Use a WSGI server (gunicorn/uvicorn) in front of Flask, with HTTPS termination.
+- Use a WSGI server (e.g., gunicorn) in front of Flask, with HTTPS termination via a reverse proxy (Caddy/Nginx) or a managed platform.
 
