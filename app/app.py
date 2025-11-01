@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
 from typing import Dict, List
 
 import numpy as np
@@ -14,11 +15,15 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
+# Ensure project root is on sys.path so `src` is importable when running as a script
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from src.model import build_model
 from src.grad_cam import GradCAM, overlay_heatmap_on_image
 
 # Config
-ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = ROOT / "models"
 DEFAULT_MODEL_PATH = MODELS_DIR / "resnet18_best.pth"
 CLASSES_PATH = MODELS_DIR / "classes.json"
@@ -125,4 +130,7 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    # Bind to localhost by default to avoid macOS "Local Network" permission prompts.
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host=host, port=port, debug=True)
